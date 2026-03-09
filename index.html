@@ -543,6 +543,27 @@
   .restart-link:hover { color: var(--ink); }
 
 
+
+  /* Business impact box */
+  .impact-box {
+    background: #fff8e1;
+    border-left: 3px solid #a06000;
+    border-radius: 0 4px 4px 0;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: .85rem;
+    line-height: 1.7;
+    color: #5a4000;
+  }
+  .impact-box strong { color: #7a4f00; }
+  .impact-box .impact-source {
+    font-size: .72rem;
+    color: #9a7a40;
+    margin-top: 4px;
+    display: block;
+    font-style: italic;
+  }
+
   /* Observation items */
   .obs-item {
     display: flex;
@@ -885,22 +906,43 @@
     <p class="results-eyebrow">Your Results</p>
 
     <div class="score-display">
-      <span class="score-num" id="res-score">-</span>
+      <span class="score-num" id="res-score"></span>
       <span class="score-denom">/ 28</span>
     </div>
-    <span class="score-label" id="res-label">-</span>
+    <span class="score-label" id="res-label"></span>
 
     <div class="result-divider"></div>
 
-    <h2 class="result-heading" id="res-heading">-</h2>
+    <h2 class="result-heading" id="res-heading"></h2>
+
+    <div class="impact-box" id="res-impact"></div>
+
     <div class="result-body" id="res-body"></div>
 
     <div class="signal-box">
       <p class="signal-label">Where to Start</p>
-      <p id="res-signal">-</p>
+      <p id="res-signal"></p>
     </div>
 
-    <!-- WFS Positioning -->
+    <div class="result-divider"></div>
+
+    <div class="snapshot-box">
+      <h3 id="cta-heading">What Would You Like to Do Next?</h3>
+      <p id="cta-sub">Choose the option that fits where you are right now.</p>
+      <div class="cta-pair">
+        <button class="btn-primary" style="justify-content:center;" onclick="requestSnapshot()">
+          Send Me the Free Snapshot ->
+        </button>
+        <button class="btn-secondary" onclick="window.open('https://meetings-na2.hubspot.com/josh-troy/cm?uuid=ba95f2f2-ae1a-4d7d-aca5-81745ac2924d', '_blank')">
+          Book a Call with WFS ->
+        </button>
+      </div>
+      <div class="snapshot-confirm" id="snapshot-confirm">
+        <p><strong>You are all set.</strong> Your Revenue Leakage Snapshot is being prepared and will be emailed to you shortly. We will review your specific responses and send back a focused breakdown of where to focus first.</p>
+      </div>
+    </div>
+
+    <!-- WFS Positioning LAST -->
     <div class="wfs-block">
       <p class="wfs-block-eyebrow">About WFS Group</p>
       <h3>We build revenue engines for the middle market.</h3>
@@ -914,29 +956,8 @@
       </div>
     </div>
 
-    <p class="result-body" style="font-size:.88rem;">
-      If you want a specific breakdown of where your system is leaking and what to prioritize first, we can put that together for you.
-    </p>
 
-    <div class="snapshot-box">
-      <h3>What Would You Like to Do Next?</h3>
-      <p>Choose the option that fits where you are right now.</p>
-
-      <div class="cta-pair">
-        <button class="btn-primary" style="justify-content:center;" onclick="requestSnapshot()">
-          Send Me the Snapshot →
-        </button>
-        <button class="btn-secondary" onclick="window.open('https://meetings-na2.hubspot.com/josh-troy/cm?uuid=ba95f2f2-ae1a-4d7d-aca5-81745ac2924d', '_blank')">
-          Book a Call with WFS →
-        </button>
-      </div>
-
-      <div class="snapshot-confirm" id="snapshot-confirm">
-        <p><strong>You're all set.</strong> Your Revenue Leak Snapshot is being prepared and will be emailed to you shortly. We'll review your specific responses and send back a focused breakdown of where to focus first.</p>
-      </div>
-    </div>
-
-    <button class="restart-link" onclick="restart()">Start over</button>
+        <button class="restart-link" onclick="restart()">Start over</button>
   </div>
 
 </div>
@@ -1047,169 +1068,193 @@
   function showResults(score, name) {
     document.getElementById('res-score').textContent = score;
 
-    // Pull individual answers for cross-referencing
-    const q1 = answers['q1']; // close date movement
-    const q2 = answers['q2']; // stage aging
-    const q3 = answers['q3']; // qualification discipline
-    const q4 = answers['q4']; // pipeline coverage
-    const q5 = answers['q5']; // coverage vs reality
-    const q6 = answers['q6']; // forecast accuracy
-    const q7 = answers['q7']; // revenue source
+    const q1 = answers['q1'];
+    const q2 = answers['q2'];
+    const q3 = answers['q3'];
+    const q4 = answers['q4'];
+    const q5 = answers['q5'];
+    const q6 = answers['q6'];
+    const q7 = answers['q7'];
 
-    const founderLed      = q7 === 4;
-    const partnershipLed  = q7 === 3;
-    const slippage        = q1 >= 3;
-    const stageRot        = q2 >= 3;
-    const noQual          = q3 >= 3;
-    const inflatedPipe    = q4 === 3; // >4x scored as 3
-    const lowPipe         = q4 === 4; // <2x scored as 4
-    const pipeGap         = q5 >= 3;
-    const forecastMiss    = q6 >= 3;
-    const badForecast     = q6 === 4;
+    const founderLed     = q7 === 4;
+    const partnershipLed = q7 === 3;
+    const slippage       = q1 >= 3;
+    const stageRot       = q2 >= 3;
+    const noQual         = q3 >= 3;
+    const inflatedPipe   = q4 === 3;
+    const lowPipe        = q4 === 4;
+    const pipeGap        = q5 >= 3;
+    const forecastMiss   = q6 >= 3;
+    const badForecast    = q6 === 4;
 
-    let label, labelClass, heading, observations, priority;
+    let label, labelClass, heading, impact, observations, priority, ctaHeading, ctaSub;
 
-    // ── TIER 1: Minimal Leakage (7-10) ──────────────────────────────
+    // TIER 1: Minimal Leakage
     if (score <= 10) {
       label = 'Minimal Leakage';
       labelClass = 'label-green';
-      heading = 'Your sales system has real structural discipline. That is harder to build than most founders realize.';
+      heading = 'Honestly? You might be the most organized founder we have seen all week.';
+
+      impact = `EY research finds that companies lose 1-5% of EBITDA annually to revenue leakage -- often without knowing it. For a $5M company that is up to $250K quietly walking out the door each year. Your score suggests your system is plugging most of those holes. That said, the ones that remain are worth finding before they grow. <span class="impact-source\'>Source: EY Global Revenue Leakage Study</span>`;
 
       observations = [];
 
       if (q1 === 1 && q2 === 1) {
-        observations.push('Close dates are holding and deals are progressing through stages on schedule. That is the single strongest indicator of pipeline health -- it means your stage definitions are actually gatekeeping, not just labeling.');
-      } else if (q1 === 2 || q2 === 2) {
-        observations.push('Deal movement is mostly predictable with occasional slippage. This is normal at scale, but worth watching as a leading indicator. If close date movement starts becoming routine rather than exceptional, that is when structural drift begins.');
+        observations.push('Close dates are holding and deals are moving predictably. Think of your pipeline like a well-maintained plumbing system -- water flows in, water flows out, no mysterious puddles in the basement. That is genuinely rare and it means your stage definitions are actually doing their job rather than just decorating your CRM.');
+      } else {
+        observations.push('Deal movement is mostly predictable with occasional slippage. A little slippage is like a slow drip from a faucet -- annoying but manageable. The thing to watch is whether that drip becomes a pattern. If close date movement starts feeling routine, that is usually the first sign that stage discipline is softening.');
       }
 
       if (q3 <= 2) {
-        observations.push('Qualification discipline is intact' + (q3 === 1 ? ' and consistent across the team. That means your pipeline represents real opportunities, not wishful thinking.' : ', though with some rep-to-rep variation. The risk is that inconsistency here compounds quietly -- one weak qualifier on the team can inflate your pipeline by 20% without anyone noticing.'));
+        observations.push(q3 === 1
+          ? 'Qualification is tight and consistent across the team. This is the single biggest lever in pipeline health -- when everyone qualifies the same way, your forecast actually means something. You are not averaging five different opinions into one number and hoping for the best.'
+          : 'A qualification framework exists but varies a bit rep to rep. The risk here is subtle: your best qualifier is quietly carrying the data quality for everyone else. It works until it does not -- and it usually stops working right when you scale.');
       }
 
       if (q6 <= 2) {
-        observations.push('Forecast accuracy within ' + (q6 === 1 ? '5%' : '10%') + ' over three quarters is genuinely rare. Most companies running at your growth stage are missing by 15-20%. That predictability is a strategic asset -- it means you can make investment decisions with real confidence.');
+        observations.push('Forecast accuracy within ' + (q6 === 1 ? '5%' : '10%') + ' over three quarters is the kind of thing that makes CFOs emotional. Most companies at your stage are missing by 15-20% and telling themselves a different story every quarter. Your predictability is a genuine competitive asset.');
       }
 
       if (founderLed) {
-        observations.push('The one structural flag: revenue is still primarily founder-led. Even a disciplined pipeline becomes a growth ceiling when deal flow depends on founder involvement. The system is working -- but it may not be replicable yet without you in the room.');
-        priority = 'Your priority is transitioning revenue generation from founder-dependent to system-dependent. Document the sales motion, install rep-level qualification accountability, and build a pipeline that runs without your direct involvement in every deal.';
+        priority = 'Here is the honest flag: your revenue is still primarily founder-led, which means the system works great -- as long as you are in every deal. That is less a sales system and more a one-person show with really good supporting actors. The priority is transitioning deal flow from founder-dependent to system-dependent before that ceiling becomes a real problem.';
       } else {
-        priority = 'Your priority is codifying what is working before the team grows. The discipline you have built is a competitive advantage -- but informal habits erode with each new hire. Process documentation and stage exit criteria will protect what you have built.';
+        priority = 'Your priority is documentation. Not because things are broken, but because informal discipline is the first casualty of growth. Every new hire dilutes what you have built unless it is written down. Codify the qualification criteria, formalize the stage exit gates, and what you have now will still be intact when the team doubles.';
       }
 
-    // ── TIER 2: Early Structural Issues (11-16) ─────────────────────
+      ctaHeading = 'Your system is in good shape. Here is how to keep it that way.';
+      ctaSub = 'Get a free snapshot of the specific areas worth monitoring before they become problems. Most founders in your tier wish they had done this six months earlier.';
+
+    // TIER 2: Early Structural Issues
     } else if (score <= 16) {
       label = 'Early Structural Issues';
       labelClass = 'label-yellow';
-      heading = 'The system mostly works. But there are early warning signs it will not scale cleanly.';
+      heading = 'Your pipeline is like a car that mostly runs fine -- except for that noise it makes on left turns that you have been ignoring for three months.';
+
+      impact = `According to MGI Research, 42% of companies experience revenue leakage -- and most of them felt fine right up until they ran the numbers. EY puts the average annual loss at 1-5% of EBITDA. For a $10M company, that is $100K-$500K per year in revenue that closed on paper but never actually landed. <span class="impact-source\'>Sources: MGI Research; EY Global Revenue Leakage Study</span>`;
 
       observations = [];
 
       if (slippage && !stageRot) {
-        observations.push('Close dates are moving more than they should, but deals are still progressing through stages. This specific combination usually means your stage definitions are fine but your exit criteria are weak -- deals advance without real buyer commitment, so close dates become estimates rather than commitments.');
+        observations.push('Deals are moving their close dates more than they should but still progressing through stages. That specific combination -- movement without stalling -- usually means your stage definitions are fine but your exit criteria are soft. Deals advance because a rep says they are ready, not because the buyer has demonstrated they are ready. Small difference on paper, significant difference in forecast accuracy.');
       } else if (!slippage && stageRot) {
-        observations.push('Close dates are holding but deals are stalling in later stages. That is a late-stage qualification problem. Opportunities are entering your pipeline that look real but are not ready to close -- and they are sitting in your late stages inflating your forecast without real intent behind them.');
+        observations.push('Close dates are holding but deals are starting to stall in later stages. Think of it like a traffic jam that only happens near the exit ramp. Everything moves fine until it gets close to closing, then something breaks down. That is almost always a late-stage qualification issue -- deals that looked real early are revealing themselves as not-quite-ready closer to the finish line.');
       } else if (slippage && stageRot) {
-        observations.push('Deals are both moving their close dates and stalling in later stages. That combination points to a qualification gap at entry -- deals are entering the pipeline before they are truly qualified, which means you are managing volume rather than quality.');
+        observations.push('Deals are both moving close dates and stalling in stages. That combination is the classic early signal of pipeline inflation -- deals entering faster than they are being properly qualified, which means you are managing volume rather than quality. The pipeline looks busy. It just is not converting as cleanly as it should.');
+      } else {
+        observations.push('Deal progression is mostly on track with some inconsistency creeping in. These are the kinds of early signals that feel minor until one quarter they suddenly are not. The good news is that early-stage friction is the cheapest kind to fix.');
       }
 
       if (noQual) {
-        observations.push('Qualification is rep-dependent rather than system-driven. This is the root cause of most early-stage forecast drift. When each rep qualifies differently, your pipeline is not one pipeline -- it is five different pipelines with five different conversion rates that you are averaging into a single forecast number.');
+        observations.push('Qualification is rep-dependent rather than system-driven. This is the single most common source of forecast drift we see. When each rep qualifies differently, your pipeline is not one pipeline -- it is five different pipelines with five different conversion rates being averaged into a number you are presenting with confidence. One strong qualifier on the team can mask the fact that two others are letting everything through.');
       } else if (q3 === 2) {
-        observations.push('A qualification framework exists but is applied inconsistently. The framework is not the problem -- adoption is. Until qualification is non-negotiable at stage gates, your best reps are carrying the data quality for everyone else.');
+        observations.push('A framework exists but is not consistently enforced. The irony of a qualification framework that is optional is that it mostly gets used by the reps who need it least. The ones who would benefit most from the guardrails are the ones most likely to freestyle around them.');
       }
 
       if (pipeGap) {
-        observations.push('Pipeline coverage is not converting at the rate it suggests. That gap between what the pipeline says and what actually closes is a leading indicator of the qualification issue -- your pipeline has volume but not all of it represents real revenue.');
+        observations.push('Pipeline coverage is not converting at the rate it suggests. That gap -- between what the pipeline says and what actually closes -- is where the early leakage lives. It is not dramatic yet. But it compounds.');
       }
 
       if (founderLed) {
-        priority = 'The most important move is separating what the system produces from what you produce personally. Founder-led revenue is masking the inconsistency right now. When you are involved, deals close. When you are not, the pattern breaks down. Build the qualification framework first -- that is the lever that makes the system run without you.';
+        priority = 'The trickiest part of founder-led revenue is that it masks early structural problems. When you are personally involved deals close at a higher rate, which makes the system look healthier than it is. The move is to start measuring separately: what does the pipeline close when you are in the deal versus when you are not? That gap is your real diagnostic.';
       } else {
-        priority = 'Start with stage exit criteria. Not a full CRM rebuild -- just define what evidence must exist before a deal advances from each stage. That one change will surface qualification gaps, improve forecast accuracy, and give you a real pipeline number within 60 days.';
+        priority = 'Start with stage exit criteria -- define what evidence must exist before a deal can advance from each stage. Not suggestions, requirements. That one change will surface qualification gaps, compress your inflated pipeline to its real size, and give you a forecast you can actually trust within 60 days.';
       }
 
-    // ── TIER 3: Revenue Leakage Likely (17-22) ──────────────────────
+      ctaHeading = 'These are the easiest problems to fix -- and the most expensive to ignore.';
+      ctaSub = 'Early structural issues cost companies an average of $100K-$500K annually by the time they become visible. Get your free snapshot and find out exactly what to fix first before this quarter\'s noise becomes next quarter\'s miss.';
+
+    // TIER 3: Revenue Leakage Likely
     } else if (score <= 22) {
       label = 'Revenue Leakage Likely';
       labelClass = 'label-orange';
-      heading = 'Your CRM likely looks healthier than your revenue actually is.';
+      heading = 'Your CRM is writing checks your pipeline cannot cash -- and it has been doing it for a while.';
+
+      impact = `A 2020 Boston Consulting Group survey found that 45% of business leaders consider revenue leakage a systemic problem at their companies. EY research puts the annual cost at 1-5% of EBITDA -- but for companies with the patterns your responses indicate, that number trends toward the higher end. On a $5M revenue base, that is $150K-$250K per year leaving through gaps most founders never see. <span class="impact-source\'>Sources: Boston Consulting Group 2020; EY Global Revenue Leakage Study</span>`;
 
       observations = [];
 
       if (slippage && stageRot) {
-        observations.push('Deals are regularly moving their close dates AND stalling in late stages. That is the clearest signal of pipeline inflation -- opportunities are being advanced through stages based on time and activity rather than genuine buyer progression. The late-stage pipeline number you are looking at is not a forecast. It is a wish list.');
+        observations.push('Deals are regularly moving close dates AND stalling in late stages. This is the pipeline equivalent of a hotel that keeps showing rooms as available online while the rooms are actually occupied. Your CRM says the deals are there. Technically they are. They are just not going anywhere. Late-stage pipeline that does not close and does not die is the most expensive kind -- it consumes your team\'s time, inflates your forecast, and delays the recognition that something structural needs fixing.');
       } else if (slippage) {
-        observations.push('Close date movement is chronic. When this happens consistently, it stops being a deal problem and becomes a pipeline architecture problem. Your reps have learned that close dates are negotiable, which means the date in the CRM no longer carries any informational value for forecasting.');
+        observations.push('Close date movement has become chronic. When this happens consistently across the pipeline it stops being a deal-by-deal issue and becomes a systemic one. The close date in your CRM no longer carries real information -- it is a placeholder that gets moved when someone asks about it. That means your forecast is being built on dates that everyone knows are fictional, which is a creative exercise, not a planning tool.');
       } else if (stageRot) {
-        observations.push('Late-stage deals are dying rather than closing. That is a late-stage qualification failure -- deals that should have been disqualified earlier are surviving long enough to consume your team\'s time and distort your forecast before they finally die.');
+        observations.push('Late-stage deals are dying rather than closing, which is one of the most expensive patterns in sales. Think of it like buying groceries, putting them in the fridge, and watching them expire before you cook them. You did all the work to get them there. You just lost them at the end. Late-stage deal death is almost always a qualification failure that happened weeks earlier -- the deal should have been disqualified before it got expensive.');
       }
 
       if (noQual) {
-        observations.push('Qualification has no consistent framework behind it. Every deal in your pipeline was evaluated differently by a different rep using different criteria. That means your pipeline is not a set of opportunities -- it is a collection of individual opinions about what might close. You cannot build a reliable forecast on opinions.');
+        observations.push('There is no consistent qualification framework in use. Every deal in your pipeline was evaluated by a different rep using different criteria on a different day. That means your pipeline is not a set of opportunities -- it is a collection of individual opinions about what might close. You cannot build a reliable forecast on opinions, and you cannot fix conversion rates without knowing what standard deals are being measured against.');
       } else if (q3 === 2) {
-        observations.push('A framework exists but enforcement is inconsistent. The gap between having a qualification process and using it is where most of your leakage is occurring. Deals that would have been disqualified under strict criteria are surviving into late stages because the framework is optional.');
+        observations.push('A qualification framework exists but enforcement is inconsistent. Here is the quiet math on that: if two out of five reps are applying the framework loosely, roughly 40% of your pipeline has been qualified at a lower standard than you think. Those deals are not going to convert at the same rate, but they are sitting in your forecast at full value.');
       }
 
       if (inflatedPipe && pipeGap) {
-        observations.push('You are carrying more than 4x pipeline coverage but it is not converting to expected revenue. That is the definition of pipeline inflation -- the volume creates false confidence while the underlying quality is too low to support the forecast. High coverage with low conversion is often worse than low coverage because it delays the recognition that something structural is broken.');
+        observations.push('You are carrying more than 4x pipeline coverage but it is not converting to expected revenue. High coverage with low conversion is actually worse than low coverage, because the volume creates false confidence. The team sees a full pipeline and relaxes. The board sees a full pipeline and sets expectations. Then the quarter ends and everyone is confused about what happened to all those deals.');
       } else if (pipeGap) {
-        observations.push('Pipeline coverage looks reasonable but is consistently falling short of expected revenue. That gap is the revenue leak made visible. The deals are in the system -- they are just not closing at the rate or value that the pipeline suggests they should.');
+        observations.push('Pipeline coverage looks reasonable but consistently falls short of expected revenue. That gap is the leakage made visible -- the deals are in the system, they just are not closing at the rate or value the pipeline suggests. The cause is almost always upstream: deals entering the pipeline that were never truly qualified.');
       }
 
       if (forecastMiss) {
-        observations.push('Forecast accuracy has been off by ' + (badForecast ? 'more than 20%' : 'around 20%') + ' for three consecutive quarters. At that level of miss, the forecast is no longer a planning tool -- it is a post-quarter explanation document. The underlying issue is that the inputs going into the forecast (stage, close date, deal value) are not trustworthy.');
+        observations.push('Forecast accuracy has been off by ' + (badForecast ? 'more than 20%' : 'around 20%') + ' for three consecutive quarters. At that point, the forecast is not a forecast -- it is a quarterly tradition of optimism followed by explanation. The issue is not the forecasting process itself. It is the quality of the inputs going into it.');
       }
 
       if (founderLed) {
-        priority = 'The most urgent fix is separating the deals you are personally working from the deals the system is working -- and looking at the conversion rate of each independently. When founder involvement is the primary closing mechanism, the pipeline data is hiding how broken the system actually is. Install qualification gates first, then measure what the system closes without you.';
-      } else if (partnershipLed) {
-        priority = 'Partnership-led revenue has different pipeline dynamics than direct sales -- deals often move on partner timelines rather than your own. Make sure your stage definitions and close date discipline reflect that reality. The qualification and forecasting issues still apply, but the fix needs to account for the fact that you do not control the full sales motion.';
+        priority = 'The most urgent thing to understand is the difference between what the system closes and what you close personally. Founder-led revenue with these pipeline patterns usually means the numbers look manageable because your deals are propping up a system that is not working independently. Pull yourself out of the conversion rate calculation and look at what the team closes on its own. That is your real baseline -- and it is usually the number that changes how urgent this feels.';
       } else {
-        priority = 'The highest-leverage starting point is installing hard exit criteria at your two most active pipeline stages. Not suggestions -- requirements. If a deal cannot demonstrate specific buyer behavior to advance, it gets disqualified or returned to an earlier stage. That single change will compress your pipeline, improve forecast accuracy, and surface where deals are actually dying within 30 days.';
+        priority = 'The highest-leverage starting point is installing hard exit criteria at your two most active pipeline stages. Not suggestions -- requirements. A deal that cannot demonstrate specific buyer behavior does not advance. That single change will compress your pipeline to its real size, surface where deals are actually dying, and give you a forecast you can defend within 30 days.';
       }
 
-    // ── TIER 4: Significant Revenue Leakage (23-28) ─────────────────
+      ctaHeading = 'You are likely leaving six figures on the table this year. Let\'s find out exactly where.';
+      ctaSub = 'Companies with this pattern lose an average of $150K-$250K annually before they identify the structural cause. Get the free snapshot and find out specifically where your system is leaking and what to fix first. This one is worth the two minutes.';
+
+    // TIER 4: Significant Revenue Leakage
     } else {
       label = 'Significant Revenue Leakage';
       labelClass = 'label-red';
-      heading = 'Revenue is leaving the system at multiple points simultaneously. The pipeline number is not the real number.';
+      heading = 'Your pipeline is a confident-looking spreadsheet that is quietly disagreeing with your bank account.';
+
+      impact = `Research by Spekit found that companies with systemic revenue leakage lose an average of 9% of annual revenue. For context: EY puts the floor at 1-5% of EBITDA across all companies. When close date movement, stage inflation, qualification gaps, and forecast misses all appear together -- as they do in your responses -- the number trends toward the top of that range. On a $5M revenue base, that is $250K-$450K per year. On a $10M base, it is $500K-$900K. <span class="impact-source\'>Sources: Spekit Revenue Leakage Research; EY Global Revenue Leakage Study; Boston Consulting Group</span>`;
 
       observations = [];
 
       if (slippage && stageRot && noQual) {
-        observations.push('Deals are pushing close dates, stalling in late stages, and entering the pipeline without consistent qualification. That is a full-system failure pattern. Every stage of your pipeline has a leak: deals enter unqualified, advance without criteria, stall without accountability, and push dates without consequence. The CRM is recording activity, not progress.');
+        observations.push('Deals are pushing close dates, stalling in late stages, and entering the pipeline without consistent qualification -- all at the same time. That is a full-system pattern. It is a bit like a restaurant where the host is seating people before tables are ready, the kitchen is backed up, and the waitstaff is winging the specials. Everyone is busy. Not much is actually closing. The CRM is full of activity that looks like progress but is really just organized waiting.');
       } else if (slippage && stageRot) {
-        observations.push('Chronic close date movement combined with late-stage deal death is the signature of a pipeline that has lost structural integrity. Reps have learned -- explicitly or implicitly -- that close dates are not commitments and that stage advancement does not require real buyer evidence. The forecast built on top of this data is structurally unreliable.');
+        observations.push('Chronic close date movement combined with late-stage deal death is the clearest pipeline integrity failure pattern we see. The forecast built on top of this data is not wrong because of bad math -- it is wrong because the inputs are fictional. Dates that keep moving and deals that keep dying are the system telling you that the opportunities were never as real as the CRM said they were.');
       } else if (noQual && stageRot) {
-        observations.push('No consistent qualification combined with late-stage deal death means the same thing every quarter: deals that look real in the pipeline are not real. They are surviving early stages because nothing is filtering them out, then dying late because the buyer was never truly committed. You are spending your team\'s most valuable time -- late-stage selling -- on deals that were never qualified to be there.');
+        observations.push('No consistent qualification combined with late-stage deal death means the same expensive movie is playing every quarter: deals that were never truly qualified survive the early stages because nothing filters them out, then die in late stages after consuming your team\'s most valuable time. Late-stage selling hours are the most expensive hours in your business. Spending them on deals that were never qualified to be there is where a significant portion of your leakage lives.');
       }
 
       if (inflatedPipe && pipeGap) {
-        observations.push('More than 4x pipeline coverage that is not converting to expected revenue is the clearest possible signal of pipeline inflation. The volume of the pipeline is creating organizational confidence that is not supported by the underlying data quality. When a team believes the pipeline is full, urgency drops -- and that drop in urgency accelerates the very leakage that created the inflation in the first place.');
+        observations.push('More than 4x pipeline coverage that is not converting to expected revenue is the textbook definition of a confidence illusion. The volume is real. The deals are in the CRM. The conversion just is not happening. High pipeline coverage with low conversion tends to make things worse over time because the apparent fullness of the pipeline reduces urgency -- why push hard when there is so much in the funnel? The answer is that most of what is in the funnel is not what it appears to be.');
       } else if (lowPipe && pipeGap) {
-        observations.push('Pipeline coverage is below 2x and still not converting at expected rates. That is a demand generation problem layered on top of a conversion problem. You do not have enough pipeline to absorb normal conversion losses, and the conversion rate itself is below where it needs to be. Both problems need attention, but the conversion architecture has to come first -- there is no point building more pipeline volume into a broken system.');
+        observations.push('Pipeline coverage is below 2x and still not converting at expected rates. That is two problems stacked: not enough pipeline coming in, and the pipeline that does exist is not closing efficiently. You cannot solve a conversion problem by adding more volume to a broken system -- you end up with a bigger pipeline that still does not convert, just with more deals to explain away at the end of the quarter.');
       } else if (pipeGap) {
-        observations.push('The pipeline consistently overpromises and underdelivers. That gap between coverage and conversion is where the revenue is disappearing. It is not one deal or one rep or one quarter -- it is a systemic pattern that points to pipeline quality, not pipeline quantity, as the core issue.');
+        observations.push('The pipeline consistently overpromises and underdelivers. That gap has a dollar amount attached to it, and it compounds every quarter that the structural cause goes unaddressed. It is not a bad quarter problem. It is an architecture problem.');
       }
 
       if (badForecast) {
-        observations.push('Missing forecast by more than 20% for three consecutive quarters means the forecasting process has lost credibility as a planning tool. At this level of miss, the number in the forecast is not grounded in pipeline reality -- it is an aspirational target being called a forecast. The fix is not better forecasting. It is fixing the pipeline inputs that the forecast is built on.');
+        observations.push('Missing forecast by more than 20% for three consecutive quarters is the organizational equivalent of your GPS confidently routing you into a lake. The tool is technically functioning. It is just not connected to reality. At this level of miss, the forecast has lost its utility as a planning instrument -- it is a post-quarter story that everyone rewrites in the same meeting. The fix is not better forecasting. It is fixing the pipeline data the forecast is built on.');
       } else if (forecastMiss) {
-        observations.push('Consistent 20% forecast misses over three quarters point to a data integrity problem upstream of the forecast itself. The issue is not how the forecast is calculated -- it is the quality of the stage, close date, and deal value data going into it. Garbage in, garbage out.');
+        observations.push('Consistent forecast misses over three quarters mean the forecasting process has lost credibility. Not because the math is wrong -- because the inputs are. Stage, close date, and deal value data that has not been stress-tested against real buyer behavior will always produce a number that sounds right and lands wrong.');
       }
 
       if (founderLed && badForecast) {
-        priority = 'This is the most urgent combination in this diagnostic. Founder-led revenue with significant structural breakdown and chronic forecast misses means the business is more dependent on you personally than the numbers suggest, and the numbers themselves are not accurate. The immediate priority is a pipeline audit -- go deal by deal through anything in late stages and disqualify anything that does not have documented buyer evidence. Then build the qualification framework that makes that audit unnecessary next quarter.';
+        priority = 'This is the most urgent combination in this diagnostic -- and if you are being honest with yourself, you probably already know something is off. Founder-led revenue propping up a structurally broken pipeline with chronic forecast misses is a situation that looks manageable until it suddenly does not. The immediate priority is a pipeline audit: go deal by deal through anything in late stages and apply consistent qualification criteria. Disqualify everything that does not meet the bar. You will likely lose 30-40% of your visible pipeline on paper. What you will gain is an accurate picture of where you actually stand -- which is the only thing that makes every subsequent fix possible.';
       } else if (founderLed) {
-        priority = 'Founder-led revenue is carrying a system that is not functioning independently. The priority is a two-track fix: install qualification gates that work without your involvement, and audit the current late-stage pipeline to understand what is actually closeable versus what is occupying space. Those two moves will give you an accurate picture of where you actually stand -- which is the prerequisite for fixing anything else.';
+        priority = 'Founder-led revenue is carrying a system that is not functioning without you. The priority is a two-track fix: audit the current late-stage pipeline to understand what is actually closeable, and install qualification gates that work without your involvement. Those two moves will give you the real number -- not the CRM number -- and a clear picture of exactly what needs to change.';
       } else {
-        priority = 'The scale of the leakage suggests this needs a system-level response, not individual fixes. Start with a pipeline audit of everything in stages three and beyond -- apply consistent qualification criteria to each deal and disqualify anything that cannot meet the bar. You will likely lose 30-40% of your visible pipeline on paper. What you will gain is an accurate forecast and a clear picture of exactly where the system is breaking down. That accuracy is what makes every subsequent fix possible.';
+        priority = 'Start with a full audit of everything in stages three and beyond. Apply consistent qualification criteria to each deal and disqualify anything that cannot meet the bar. You will shrink the pipeline significantly. That is not a problem -- that is the system becoming honest. A smaller, accurate pipeline is worth ten times more than a large fictional one. Once you know what is real, fixing the architecture becomes straightforward.';
       }
+
+      ctaHeading = 'At this score, every month without a fix has a dollar amount attached to it.';
+      ctaSub = 'Companies with these patterns lose an average of 5-9% of annual revenue to structural leakage -- often for years before identifying the cause. The snapshot is free. The cost of not knowing is not. Click below and let\'s show you exactly where it is happening.';
     }
 
-    // Build the observations HTML
+    // Build impact HTML
+    document.getElementById('res-impact').innerHTML =
+      '<strong>What this typically costs companies like yours:</strong> ' + impact;
+
+    // Build observations HTML
     const obsHTML = observations.map((obs, i) =>
       '<div class="obs-item"><span class="obs-num">0' + (i+1) + '</span><p>' + obs + '</p></div>'
     ).join('');
@@ -1219,9 +1264,11 @@
     document.getElementById('res-heading').textContent = heading;
     document.getElementById('res-body').innerHTML = obsHTML;
     document.getElementById('res-signal').textContent = priority;
+    document.getElementById('cta-heading').textContent = ctaHeading;
+    document.getElementById('cta-sub').textContent = ctaSub;
   }
 
-  async function requestSnapshot() {
+    async function requestSnapshot() {
     const btn = document.querySelector('.cta-pair .btn-primary');
     btn.textContent = 'Sending...';
     btn.disabled = true;
@@ -1237,11 +1284,11 @@
 
     const payload = {
       _replyto: email,
-      _subject: 'Revenue Leak Snapshot Request — ' + company,
+      _subject: 'Revenue Leak Snapshot Request - ' + company,
       Name: name,
       Email: email,
       Company: company,
-      Score: score + ' / 28 — ' + label,
+      Score: score + ' / 28 - ' + label,
       Diagnosis: heading,
       Detail: body,
       Signal: signal
@@ -1259,12 +1306,12 @@
         document.getElementById('snapshot-confirm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         btn.textContent = 'Snapshot Requested';
       } else {
-        btn.textContent = 'Send Me the Snapshot →';
+        btn.textContent = 'Send Me the Snapshot ->';
         btn.disabled = false;
         alert('Something went wrong. Please try again.');
       }
     } catch(e) {
-      btn.textContent = 'Send Me the Snapshot →';
+      btn.textContent = 'Send Me the Snapshot ->';
       btn.disabled = false;
       alert('Something went wrong. Please try again.');
     }
